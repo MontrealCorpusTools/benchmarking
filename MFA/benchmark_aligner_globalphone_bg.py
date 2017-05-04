@@ -51,8 +51,7 @@ duration = end - beg
 csv_columns = ['Computer','Date','Corpus', 'Type of benchmark', 'Total time', 'Num_jobs']
 
 
-dict_data =
-        {'Computer': platform.node(),
+dict_data = {'Computer': platform.node(),
         'Date': str(datetime.now()),
         'Corpus': corpus_dir,
         'Version': aligner.__version__,
