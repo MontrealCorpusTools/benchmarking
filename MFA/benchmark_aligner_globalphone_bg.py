@@ -11,7 +11,7 @@ from datetime import datetime
 
 mfa_path = '/data/mmcauliffe/dev/Montreal-Forced-Aligner'
 
-current_commit = subprocess.check_output(['git', 'describe'], cwd=mfa_path)
+current_commit = subprocess.check_output(['git', 'describe', '--always'], cwd=mfa_path)
 
 sys.path.insert(0, mfa_path)
 
