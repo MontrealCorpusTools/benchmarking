@@ -16,7 +16,9 @@ current_commit = subprocess.check_output(['git', 'describe', '--always'], cwd=mf
 sys.path.insert(0, mfa_path)
 
 import aligner
-from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict
+from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict, fix_path, unfix_path
+
+fix_path()
 
 lang_code = 'BG'
 full_name = 'bulgarian'
@@ -76,3 +78,4 @@ with open(csv_file, 'a') as csv_file:
     writer.writerow(dict_data)
 
 
+unfix_path()
