@@ -50,7 +50,7 @@ align_corpus(args)
 end = time.time()
 duration = end - beg
 
-csv_columns = ['Computer','Date','Corpus', 'Type of benchmark', 'Total time', 'Num_jobs']
+csv_columns = ['Computer','Date','Corpus', 'Version', 'Language', 'Type of benchmark', 'Total time', 'Num_jobs']
 
 
 dict_data = {'Computer': platform.node(),
