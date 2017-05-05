@@ -61,7 +61,7 @@ def align_gp(lang_code, full_name):
     args.corpus_directory = '/media/share/corpora/GP_for_MFA/{}'.format(lang_code)
     args.dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/{0}_dictionary.txt'.format(lang_code)
     args.output_directory = '/data/mmcauliffe/aligner-output/{}'.format(lang_code)
-    args.output_model_path = '/data/mmcauliffe/aligner-models/bulgarian.zip'
+    args.output_model_path = '/data/mmcauliffe/aligner-models/{}.zip'.format(full_name)
 
     if os.path.exists(args.output_model_path):
         print('skipping {}, output  model already exists'.format(full_name))
