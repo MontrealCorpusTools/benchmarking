@@ -65,15 +65,15 @@ dict_data = {'Computer': platform.node(),
 now = datetime.now()
 date = str(now.year)+str(now.month)+str(now.day)
 
-csv_file = 'aligner_benchmark.csv'
+csv_path = 'aligner_benchmark.csv'
 
-if not os.path.exists(csv_file):
-    with open(csv_file, 'a') as csv_file:
+if not os.path.exists(csv_path):
+    with open(csv_path, 'a') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
         writer.writeheader()
 
 
-with open(csv_file, 'a') as csv_file:
+with open(csv_path, 'a') as csv_file:
     writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
     writer.writerow(dict_data)
 
