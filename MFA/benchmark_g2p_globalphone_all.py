@@ -19,6 +19,8 @@ sys.path.insert(0, mfa_path)
 import aligner
 from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict, fix_path, unfix_path
 
+now = datetime.now()
+date = str(now.year)+str(now.month)+str(now.day)
 
 languages = [('BG','bulgarian'),
             ('CH', 'mandarin'),
