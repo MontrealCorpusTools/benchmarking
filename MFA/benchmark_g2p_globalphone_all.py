@@ -49,7 +49,7 @@ languages = [('BG','bulgarian'),
 
 csv_path = 'g2p_benchmark.csv'
 
-csv_columns = ['Computer','Date','Dictionary', 'Version', 'Language', 'Window size', 'Type of benchmark', 'Total time']
+csv_columns = ['Computer','Date','Dictionary', 'Version', 'Language', 'Window size', 'Accuracy', 'Type of benchmark', 'Total time']
 
 if not os.path.exists(csv_path):
     with open(csv_path, 'a') as csv_file:
@@ -73,7 +73,9 @@ def g2p_gp(lang_code, full_name):
         t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=s)
         acc = t.validate()
         duration = time.time() - begin
-        line_dict = {'Dictionary': dictionary_path, 'Language': lang_code, 'Total time': duration, 'Window size': s}
+        line_dict = {'Dictionary': dictionary_path, 'Language': lang_code,
+                    'Total time': duration, 'Window size': s,
+                    'Accuracy': acc}
         line_dict.update(dict_data)
 
         with open(csv_path, 'a') as csv_file:
