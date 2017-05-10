@@ -25,7 +25,8 @@ from aligner.dictionary import Dictionary
 now = datetime.now()
 date = str(now.year)+str(now.month)+str(now.day)
 
-languages = [('BG','bulgarian'),
+languages = [('AR', 'arabic'),
+            ('BG','bulgarian'),
             ('CH', 'mandarin'),
             ('CR', 'croatian'),
             ('CZ', 'czech'),
@@ -63,6 +64,9 @@ dict_data = {'Computer': platform.node(),
 
 def g2p_gp(lang_code, full_name):
     dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/{0}_dictionary.txt'.format(lang_code)
+    if not os.path.exists(dictionary_path):
+        print('Skipping {}, no dictionary!'.format(lang_code))
+        return
     output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_g2p.zip'.format(full_name)
     temp_directory = '/data/mmcauliffe/temp/MFA'
     dictionary = Dictionary(dictionary_path, '')
