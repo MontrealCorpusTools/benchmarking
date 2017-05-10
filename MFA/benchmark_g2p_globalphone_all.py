@@ -64,6 +64,7 @@ dict_data = {'Computer': platform.node(),
 def g2p_gp(lang_code, full_name):
     dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/{0}_dictionary.txt'.format(lang_code)
     output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_g2p.zip'.format(full_name)
+    temp_directory = '/data/mmcauliffe/temp/MFA'
     dictionary = Dictionary(dictionary_path, '')
     best_acc = 0
     best_size = 0
@@ -82,7 +83,7 @@ def g2p_gp(lang_code, full_name):
             best_acc = acc
             best_size = s
 
-    t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_dir, window_size=best_size)
+    t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=best_size)
     t.train()
 
 
