@@ -70,7 +70,7 @@ def g2p_gp(lang_code, full_name):
     best_size = 0
     for s in [2,3,4]:
         begin = time.time()
-        t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_dir, window_size=s)
+        t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=s)
         acc = t.validate()
         duration = time.time() - begin
         line_dict = {'Dictionary': dictionary_path, 'Language': lang_code, 'Total time': duration, 'Window size': s}
