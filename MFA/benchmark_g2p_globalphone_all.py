@@ -83,6 +83,8 @@ def g2p_gp(lang_code, full_name):
             best_acc = acc
             best_size = s
 
+    print('The best window size for {} was {} with accuracy of {}.'.format(lang_code, best_size, best_acc))
+
     t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=best_size)
     t.train()
 
