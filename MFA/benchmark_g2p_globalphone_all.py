@@ -18,6 +18,9 @@ sys.path.insert(0, mfa_path)
 
 import aligner
 from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict, fix_path, unfix_path
+from aligner.g2p.trainer import PhonetisaurusTrainer
+
+from aligner.dictionary import Dictionary
 
 now = datetime.now()
 date = str(now.year)+str(now.month)+str(now.day)
