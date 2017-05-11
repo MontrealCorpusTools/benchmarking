@@ -64,6 +64,7 @@ dict_data = {'Computer': platform.node(),
         'Type of benchmark': 'train_g2p'}
 
 def g2p_gp(lang_code, full_name):
+    temp_directory = '/data/mmcauliffe/temp/MFA'
     dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/{0}_dictionary.txt'.format(lang_code)
     if not os.path.exists(dictionary_path):
         print('Skipping {}, no dictionary!'.format(lang_code))
@@ -71,32 +72,70 @@ def g2p_gp(lang_code, full_name):
     output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_g2p.zip'.format(full_name)
     if os.path.exists(output_model_path):
         print('Skipping {}, already a model!'.format(lang_code))
-        return
-    temp_directory = '/data/mmcauliffe/temp/MFA'
-    dictionary = Dictionary(dictionary_path, '')
-    best_acc = 0
-    best_size = 0
-    for s in [2,3,4]:
-        begin = time.time()
-        t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=s)
-        acc = t.validate()
-        duration = time.time() - begin
-        line_dict = {'Dictionary': dictionary_path, 'Language': lang_code,
-                    'Total time': duration, 'Window size': s,
-                    'Accuracy': acc}
-        line_dict.update(dict_data)
+    else:
+        dictionary = Dictionary(dictionary_path, '')
+        best_acc = 0
+        best_size = 0
+        for s in [2,3,4]:
+            begin = time.time()
+            t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=s)
+            acc = t.validate()
+            duration = time.time() - begin
+            line_dict = {'Dictionary': dictionary_path, 'Language': lang_code,
+                        'Total time': duration, 'Window size': s,
+                        'Accuracy': acc}
+            line_dict.update(dict_data)
 
-        with open(csv_path, 'a') as csv_file:
-            writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-            writer.writerow(line_dict)
-        if acc > best_acc:
-            best_acc = acc
-            best_size = s
+            with open(csv_path, 'a') as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+                writer.writerow(line_dict)
+            if acc > best_acc:
+                best_acc = acc
+                best_size = s
 
-    print('The best window size for {} was {} with accuracy of {}.'.format(lang_code, best_size, best_acc))
+        print('The best window size for {} was {} with accuracy of {}.'.format(lang_code, best_size, best_acc))
 
-    t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=best_size)
-    t.train()
+        t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=best_size)
+        t.train()
+
+    if lang_code in  ['FR', 'GE']:
+        if lang_code == 'FR':
+            dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/lexique.dict'.format(lang_code)
+            output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_lexique_g2p.zip'.format(full_name)
+        elif lang_code == 'GE':
+            dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/de.dict'.format(lang_code)
+            output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_prosodylab_g2p.zip'.format(full_name)
+        if not os.path.exists(dictionary_path):
+            print('Skipping {}, no dictionary!'.format(lang_code))
+            return
+        if os.path.exists(output_model_path):
+            print('Skipping {}, already a model!'.format(lang_code))
+            return
+        temp_directory = '/data/mmcauliffe/temp/MFA'
+        dictionary = Dictionary(dictionary_path, '')
+        best_acc = 0
+        best_size = 0
+        for s in [2,3,4]:
+            begin = time.time()
+            t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=s)
+            acc = t.validate()
+            duration = time.time() - begin
+            line_dict = {'Dictionary': dictionary_path, 'Language': lang_code,
+                        'Total time': duration, 'Window size': s,
+                        'Accuracy': acc}
+            line_dict.update(dict_data)
+
+            with open(csv_path, 'a') as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+                writer.writerow(line_dict)
+            if acc > best_acc:
+                best_acc = acc
+                best_size = s
+
+        print('The best window size for {} was {} with accuracy of {}.'.format(lang_code, best_size, best_acc))
+
+        t = PhonetisaurusTrainer(dictionary, output_model_path, temp_directory=temp_directory, window_size=best_size)
+        t.train()
 
 
 
