@@ -65,7 +65,13 @@ def align_gp(lang_code, full_name):
         args.output_directory = '/data/mmcauliffe/aligner-output/{}'.format(lang_code)
         args.output_model_path = '/data/mmcauliffe/aligner-models/{}_lexique.zip'.format(full_name)
         if not os.path.exists(args.output_model_path):
-            align_corpus(args)
+            try:
+                align_corpus(args)
+            except Exception as e:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                print('{} encountered an error!'.format(full_name))
+                traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                            file=sys.stdout)
 
     elif lang_code == 'GE':
         args = DummyArgs()
@@ -74,7 +80,13 @@ def align_gp(lang_code, full_name):
         args.output_directory = '/data/mmcauliffe/aligner-output/{}'.format(lang_code)
         args.output_model_path = '/data/mmcauliffe/aligner-models/{}_prosodylab.zip'.format(full_name)
         if not os.path.exists(args.output_model_path):
-            align_corpus(args)
+            try:
+                align_corpus(args)
+            except Exception as e:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                print('{} encountered an error!'.format(full_name))
+                traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                            file=sys.stdout)
 
     args = DummyArgs()
     args.corpus_directory = '/media/share/corpora/GP_for_MFA/{}'.format(lang_code)
