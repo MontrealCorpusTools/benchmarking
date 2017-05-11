@@ -38,6 +38,7 @@ languages = [('AR', 'arabic'),
             ('PL', 'polish'),
             ('PO', 'portuguese'),
             ('RU', 'russian'),
+            ('SP', 'spanish'),
             ('SA', 'swahili'),
             ('SW', 'swedish'),
             ('TA', 'tamil'),
@@ -68,6 +69,9 @@ def g2p_gp(lang_code, full_name):
         print('Skipping {}, no dictionary!'.format(lang_code))
         return
     output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_g2p.zip'.format(full_name)
+    if os.path.exists(output_model_path):
+        print('Skipping {}, already a model!'.format(lang_code))
+        return
     temp_directory = '/data/mmcauliffe/temp/MFA'
     dictionary = Dictionary(dictionary_path, '')
     best_acc = 0
