@@ -100,8 +100,8 @@ def g2p_gp(lang_code, full_name):
 
     if lang_code in  ['FR', 'GE']:
         if lang_code == 'FR':
-            dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/lexique.dict'.format(lang_code)
-            output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_lexique_g2p.zip'.format(full_name)
+            dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/fr.dict'.format(lang_code)
+            output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_prosodylab_g2p.zip'.format(full_name)
         elif lang_code == 'GE':
             dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/de.dict'.format(lang_code)
             output_model_path = '/data/mmcauliffe/aligner-models/g2p/{}_prosodylab_g2p.zip'.format(full_name)
