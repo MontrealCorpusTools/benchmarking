@@ -61,9 +61,9 @@ def align_gp(lang_code, full_name):
     if lang_code == 'FR':
         args = DummyArgs()
         args.corpus_directory = '/media/share/corpora/GP_for_MFA/{}'.format(lang_code)
-        args.dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/lexique.dict'.format(lang_code)
+        args.dictionary_path = '/media/share/corpora/GP_for_MFA/{0}/dict/fr.dict'.format(lang_code)
         args.output_directory = '/data/mmcauliffe/aligner-output/{}'.format(lang_code)
-        args.output_model_path = '/data/mmcauliffe/aligner-models/{}_lexique.zip'.format(full_name)
+        args.output_model_path = '/data/mmcauliffe/aligner-models/{}_prosodylab.zip'.format(full_name)
         if not os.path.exists(args.output_model_path):
             try:
                 align_corpus(args)
