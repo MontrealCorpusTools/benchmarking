@@ -38,6 +38,7 @@ args.output_directory = '/data/mmcauliffe/aligner-output/aligned_quebec_french'
 args.output_model_path = '/data/mmcauliffe/aligner-models/french_qc.zip'
 
 if not os.path.exists(args.output_model_path):
+    fix_path()
     try:
         beg = time.time()
         align_corpus(args)
@@ -48,6 +49,7 @@ if not os.path.exists(args.output_model_path):
         print('{} encountered an error!'.format(full_name))
         traceback.print_exception(exc_type, exc_value, exc_traceback,
                                     file=sys.stdout)
+    unfix_path()
 
 csv_columns = ['Computer','Date','Corpus', 'Version', 'Language', 'Type of benchmark', 'Total time', 'Num_jobs']
 
