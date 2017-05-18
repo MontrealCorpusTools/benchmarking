@@ -1,6 +1,5 @@
 import sys
 import shutil, os
-sys.path.insert(0, os.path.expanduser('~/Montreal-Forced-Aligner'))
 
 import time
 import logging
@@ -9,64 +8,67 @@ import csv
 import statistics
 from datetime import datetime
 
-from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict
+mfa_path = '/data/mmcauliffe/dev/Montreal-Forced-Aligner'
 
-corpus_dir = '/media/share/datasets/aligner_benchmarks/sorted_quebec_french'
-dict_path = os.path.expanduser('~/Montreal-Forced-Aligner/dist/montreal-forced-aligner/prosodylab.dictionaries/fr.dict')
-output_directory = '/data/michaela/aligned_quebec_french'
-output_model_path = os.path.expanduser('~/Documents/quebec_french_models.zip')
-num_jobs = 2
+current_commit = subprocess.check_output(['git', 'describe', '--always'], cwd=mfa_path)
 
-def benchmark_align_corpus(corpus_dir, dict_path, output_directory, speaker_characters, fast,
-            output_model_path, num_jobs, verbose):
-    beg = time.time()
-    align_corpus(corpus_dir, dict_path, output_directory, speaker_characters, fast,
-            output_model_path, num_jobs, verbose, False)
-    end = time.time()
-    return [(end - beg)]
+sys.path.insert(0, mfa_path)
 
-def benchmark_align_corpus_no_dict(corpus_dir, output_directory, speaker_characters, fast,
-            output_model_path, num_jobs, verbose):
-    beg = time.time()
-    align_corpus_no_dict(corpus_dir, output_directory, speaker_characters, fast,
-            output_model_path, num_jobs, verbose, False)
-    end = time.time()
-    return [(end - beg)]
+import aligner
+from aligner.command_line.train_and_align import align_corpus, align_corpus_no_dict, fix_path, unfix_path
 
-if dict_path == None:
-    nodict = benchmark_align_corpus_no_dict(corpus_dir, output_directory, 0, False, output_model_path, num_jobs, False)
-else:
-    yesdict = benchmark_align_corpus(corpus_dir, dict_path, output_directory, 0, False, output_model_path, num_jobs, True)
 
-def WriteDictToCSV(csv_file,csv_columns,dict_data):
-        with open(csv_file, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
-            writer.writeheader()
-            for data in dict_data:
-                writer.writerow(data)   
-        return            
+csv_path = 'aligner_benchmark.csv'
 
-csv_columns = ['Computer','Date','Corpus', 'Type of benchmark', 'Total time', 'Num_jobs']
-if dict_path == None:
-        dict_data = [
-        {'Computer': platform.node(), 'Date': str(datetime.now()), 'Corpus': corpus_dir, 'Type of benchmark': 'train and align', 'Total time': nodict[0], 'Num_jobs': num_jobs}
-        ]
-else:
-    dict_data = [
-        {'Computer': platform.node(), 'Date': str(datetime.now()), 'Corpus': corpus_dir, 'Type of benchmark': 'train and align', 'Total time': yesdict[0], 'Num_jobs': num_jobs}
-        ]
+class DummyArgs(object):
+    def __init__(self):
+        self.num_jobs = 12
+        self.fast = False
+        self.speaker_characters = 0
+        self.verbose = False
+        self.clean = True
+        self.no_speaker_adaptation = False
+        self.temp_directory = '/data/mmcauliffe/temp/MFA'
+
+args = DummyArgs()
+args.corpus_directory = '/media/share/datasets/aligner_benchmarks/sorted_quebec_french'
+args.dictionary_path = '/media/share/corpora/GP_for_MFA/FR/dict/fr.dict'
+args.output_directory = '/data/mmcauliffe/aligner-output/aligned_quebec_french'
+args.output_model_path = '/data/mmcauliffe/aligner-models/french_qc.zip'
+if not os.path.exists(args.output_model_path):
+    try:
+        beg = time.time()
+        align_corpus(args)
+        end = time.time()
+        duration = end - beg
+    except Exception as e:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print('{} encountered an error!'.format(full_name))
+        traceback.print_exception(exc_type, exc_value, exc_traceback,
+                                    file=sys.stdout)
+
+csv_columns = ['Computer','Date','Corpus', 'Version', 'Language', 'Type of benchmark', 'Total time', 'Num_jobs']
 
 now = datetime.now()
 date = str(now.year)+str(now.month)+str(now.day)
 
-if not os.path.exists('aligner_benchmark'+date+'.csv'):
-    open('aligner_benchmark'+date+'.csv', 'a')
-    with open('aligner_benchmark'+date+'.csv', 'a') as csv_file:
+dict_data = {'Computer': platform.node(),
+        'Date': date,
+        'Corpus': args.corpus_directory,
+        'Version': aligner.__version__,
+        'Language': 'QC',
+        'Type of benchmark': 'train and align',
+        'Total time': duration,
+        'Num_jobs': args.num_jobs}
+
+
+
+if not os.path.exists(csv_path):
+    with open(csv_path, 'a') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
         writer.writeheader()
 
-csv_file = 'aligner_benchmark'+date+'.csv'
 
-with open('aligner_benchmark'+date+'.csv', 'a') as csv_file:
+with open(csv_path, 'a') as csv_file:
     writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-    writer.writerow(dict_data[0])
+    writer.writerow(dict_data)
