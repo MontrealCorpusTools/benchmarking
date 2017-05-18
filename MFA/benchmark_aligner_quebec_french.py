@@ -1,5 +1,6 @@
 import sys
 import shutil, os
+import subprocess
 
 import time
 import logging
@@ -35,6 +36,7 @@ args.corpus_directory = '/media/share/datasets/aligner_benchmarks/sorted_quebec_
 args.dictionary_path = '/media/share/corpora/GP_for_MFA/FR/dict/fr.dict'
 args.output_directory = '/data/mmcauliffe/aligner-output/aligned_quebec_french'
 args.output_model_path = '/data/mmcauliffe/aligner-models/french_qc.zip'
+
 if not os.path.exists(args.output_model_path):
     try:
         beg = time.time()
