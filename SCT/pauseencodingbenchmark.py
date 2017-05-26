@@ -42,14 +42,14 @@ def call_back(*args):
 def pause_encoding_run_query(data):
     beg = time.time()
     with CorpusContext(data, **graph_db) as c:
-    	c.encode_pauses('^[<{].*$', call_back=call_back)
+        c.encode_pauses('^[<{].*$', call_back=call_back)
     end = time.time()
     if len(times) >1:
-    	avgtime = sum(times)/len(times)
-    	sd = statistics.stdev(times)
+        avgtime = sum(times)/len(times)
+        sd = statistics.stdev(times)
     else:
-    	avgtime = times[0]
-    	sd = statistics.stdev(times)
+        avgtime = times[0]
+        sd = statistics.stdev(times)
     return [(end - beg), avgtime, sd]
 
 #buckeye_pauses = pause_encoding_run_query(buckeyebenchmark)
@@ -79,7 +79,7 @@ now = datetime.now()
 date = str(now.year)+str(now.month)+str(now.day)
 
 if not os.path.exists('benchmark'+date+'.csv'):
-	open('benchmark'+date+'.csv', 'a')
+    open('benchmark'+date+'.csv', 'a')
     with open('benchmark'+date+'.csv', 'a') as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
         writer.writeheader()
@@ -87,9 +87,9 @@ if not os.path.exists('benchmark'+date+'.csv'):
 csv_file = 'benchmark'+date+'.csv'
 
 with open('benchmark'+date+'.csv', 'a') as csv_file:
-	writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-	writer.writerow(dict_data[0])
-	#writer.writerow(dict_data[1])
+    writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+    writer.writerow(dict_data[0])
+    #writer.writerow(dict_data[1])
 	#writer.writerow(dict_data[2])
 	#writer.writerow(dict_data[3])
 
