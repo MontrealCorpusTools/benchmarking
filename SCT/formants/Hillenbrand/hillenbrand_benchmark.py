@@ -7,7 +7,7 @@ from datetime import datetime
 import statistics
 import sys
 sys.path.insert(0,"/Users/mlml/Documents/GitHub/PolyglotDB/polyglotdb/acoustics")
-from formant import analyze_formants_vowel_segments_new, get_mean_SD, get_stdev, refine_formants, extract_formants_full
+from formant import analyze_formants_vowel_segments_new, get_mean_SD, refine_formants, extract_formants_full
 
 import polyglotdb.io as pgio
 
@@ -18,20 +18,18 @@ from polyglotdb.acoustics.analysis import generate_phone_segments_by_speaker
 from acousticsim.analysis.praat import run_script
 
 sys.path.insert(0,"/Users/mlml/Documents/transfer/Formants/")
-from hand_formants import get_hand_formants, get_mean
+from hand_formants import get_mean
 
 graph_db = ({'graph_host':'localhost', 'graph_port': 7474,
 	'graph_user': 'neo4j', 'graph_password': 'test'})
 
-#VOWELS = ['iy', 'ih', 'eh', 'ey', 'ae', 'aa', 'aw', 'ay', 'ah', 'ao', 'oy', 'ow', 'uh', 'uw', 'ux', 'er', 'ax', 'ix', 'axr', 'ax-h']
-#VOWELS = ['ih','iy','ah','uw','er','ay','aa','ae','eh','ow']
 VOWELS = ['ae', 'ah', 'aw', 'eh', 'er', 'ey', 'ih', 'iy', 'oa', 'oo', 'uw']	# NOT TIMIT although looks similar!
 
-def get_algorithm_data(corpus_name):
+def get_algorithm_data(corpus_name, nIterations, remove_short):
 	beg = time.time()
 	with CorpusContext(corpus_name, **graph_db) as g:
 
-		# THIS IS HACKY, fix later! Find out why these aren't getting encoded on Chevre
+		# This is a hack - Chevre isn't encoding these, but other machines are
 		try:
 			print("Graph host:", g.graph_host)
 		except:
@@ -42,12 +40,13 @@ def get_algorithm_data(corpus_name):
 			g.bolt_port = 7687
 			g.config.praat_path = "/Applications/Praat.app/Contents/MacOS/Praat"
 
-		prototype, metadata, data = extract_formants_full(g, VOWELS)
+		prototype, metadata, data = extract_formants_full(g, VOWELS, remove_short=remove_short, nIterations=nIterations)
 	end = time.time()
 	duration = end - beg
 	return prototype, metadata, data, duration
 
 def get_hand_formants(audio_info, time_info, corpus_dir):
+	print("corpus_dir is:", corpus_dir)
 	with open(time_info, 'r') as t:
 		time_text = t.readlines()[6:]
 	time_text2 = []
@@ -73,6 +72,7 @@ def get_hand_formants(audio_info, time_info, corpus_dir):
 	return audio_text
 
 def get_pairs(data, hand_checked):
+	print(len(data), len(hand_checked))
 	pairs = {}
 	vowel_differences = {}
 	for alg_point, values in data.items():
@@ -132,24 +132,39 @@ def data_to_csv_dict(data):
 
 def to_prototype_csv(prototype_data):
 	to_return = []
-	for item in prototype_data:
-		print(item)
-		if isinstance(item, list) and item != []:
-			item = item[0]
-		else:
-			print("There was an error with this prototype generation instance.")
-			continue
-		prototype = {}
-		prototype['file_id'] = item['tags']['discourse']
-		prototype['start'] = item['begin']
-		prototype['end'] = item['end']
-		prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
-		prototype['vowel'] = item['fields']['phone']
-		prototype['nformants'] = 5
-		prototype['F1'] = item['fields']['F1']
-		prototype['F2'] = item['fields']['F2']
-		prototype['F3'] = item['fields']['F3']
-		to_return.append(prototype)
+	if isinstance(prototype_data, list):
+		for item in prototype_data:
+			if isinstance(item, list) and item != []:
+					item = item[0]
+			else:
+				print("There was an error with this prototype generation instance.")
+				continue
+			prototype = {}
+			prototype['file_id'] = item['tags']['discourse']
+			prototype['start'] = item['begin']
+			prototype['end'] = item['end']
+			prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
+			prototype['vowel'] = item['fields']['phone']
+			prototype['nformants'] = 5
+			prototype['F1'] = item['fields']['F1']
+			prototype['F2'] = item['fields']['F2']
+			prototype['F3'] = item['fields']['F3']
+			to_return.append(prototype)
+	elif isinstance(prototype_data, dict):
+		for key, value in prototype_data.items():
+			prototype = {}
+			file_id = key[0][0].split("/")[-2]
+			prototype['file_id'] = file_id #...
+			prototype['start'] = key[0][1]
+			prototype['end'] = key[0][2]
+			prototype['measurement_time'] = prototype['start']+((prototype['end']-prototype['start'])*0.33)
+			prototype['vowel'] = key[0][4]
+			prototype['nformants'] = 5
+			prototype['F1'] = value['F1']
+			prototype['F2'] = value['F2']
+			prototype['F3'] = value['F3']
+			to_return.append(prototype)
+
 	return to_return
 
 def to_comparison_csv(pair_data):
@@ -163,11 +178,11 @@ def to_comparison_csv(pair_data):
 		comparison['vowel'] = meta[0][4]
 		comparison['nformants'] = meta[1]
 		comparison['measuredF1'] = values[0]['F1']
-		comparison['realF1'] = values[1][0]
+		comparison['realF1'] = values[1][4]
 		comparison['measuredF2'] = values[0]['F2']
-		comparison['realF2'] = values[1][1]
+		comparison['realF2'] = values[1][5]
 		comparison['measuredF3'] = values[0]['F3']
-		comparison['realF3'] = values[1][2]
+		comparison['realF3'] = values[1][6]
 		to_return.append(comparison)
 	return to_return
 
@@ -231,8 +246,11 @@ if __name__ == '__main__':
 	corpus_dir = "/Users/mlml/Documents/transfer/Hillenbrand"
 	corpus_name = "Hillenbrand"
 
+	nIterations = 2
+	remove_short = 0.05
+
 	# Get algorithm data
-	prototype, metadata, data, duration = get_algorithm_data(corpus_name)
+	prototype, metadata, data, duration = get_algorithm_data(corpus_name, nIterations, remove_short)
 	print("-------------")
 	print("The algorithm took:", duration, "seconds.")
 	print()
@@ -250,7 +268,11 @@ if __name__ == '__main__':
 
 
 	# Make correspondence between algorithm and hand-checked data (find matching pairs)
+	print(len(data), len(hand_checked))
 	pairs, vowel_differences = get_pairs(data, hand_checked)
+	print("PAIRS:")
+	for pair1, pair2 in pairs.items():
+		print({pair1 : pair2})
 
 
 	# Get averages of error for each vowel class, for each value
@@ -283,4 +305,4 @@ if __name__ == '__main__':
 	# Mean and cov data
 	cov_columns = cov_columns = ['vowel', 'F1mean', 'F2mean', 'F3mean', 'B1mean', 'B2mean', 'B3mean', 'F1F1cov', 'F1F2cov', 'F1F3cov', 'F1B1cov', 'F1B2cov', 'F1B3cov', 'F2F2cov', 'F2F3cov', 'F2B1cov', 'F2B2cov', 'F2B3cov', 'F3F3cov', 'F3B1cov', 'F3B2cov', 'F3B3cov', 'B1B1cov', 'B1B2cov', 'B1B3cov', 'B2B2cov', 'B2B3cov', 'B3B3cov']
 	cov_csv = to_cov_csv(metadata)
-	write_to_csv("csv", cov_columns, cov_csv)
+	write_to_csv("cov", cov_columns, cov_csv)

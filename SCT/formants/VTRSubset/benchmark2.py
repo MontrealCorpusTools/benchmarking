@@ -6,7 +6,6 @@ import csv
 from datetime import datetime
 import statistics
 import sys
-#sys.path.insert(0,"/Users/acoles/Documents/PolyglotDB-master-3/polyglotdb/acoustics")
 sys.path.insert(0,"/Users/mlml/Documents/GitHub/PolyglotDB/polyglotdb/acoustics")
 from formant import analyze_formants_vowel_segments_new, get_mean_SD, get_stdev, refine_formants, extract_formants_full
 
@@ -18,7 +17,6 @@ from polyglotdb.acoustics.analysis import generate_phone_segments_by_speaker
 
 from acousticsim.analysis.praat import run_script
 
-#sys.path.insert(0,"/Users/acoles/Documents/Formants/")
 sys.path.insert(0,"/Users/mlml/Documents/transfer/Formants/")
 from hand_formants import get_hand_formants, get_mean
 
@@ -27,7 +25,6 @@ graph_db = ({'graph_host':'localhost', 'graph_port': 7474,
 	'graph_user': 'neo4j', 'graph_password': 'test'})
 
 VOWELS = ['iy', 'ih', 'eh', 'ey', 'ae', 'aa', 'aw', 'ay', 'ah', 'ao', 'oy', 'ow', 'uh', 'uw', 'ux', 'er', 'ax', 'ix', 'axr', 'ax-h']
-#VOWELS = ['ih','iy','ah','uw','er','ay','aa','ae','eh','ow']
 
 def WriteDictToCSV(csv_file,csv_columns,dict_data):
         with open(csv_file, 'w') as csvfile:
@@ -82,27 +79,45 @@ def to_cov_csv(metadata):
 
 def to_prototype_csv(prototype_data):
 	to_return = []
-	for item in prototype_data:
-		print(item)
-		if isinstance(item, list) and item != []:
-			item = item[0]
-		else:
-			print("There was an error with this prototype generation instance.")
-			continue
-		prototype = {}
-		prototype['file_id'] = item['tags']['discourse']
-		prototype['start'] = item['begin']
-		prototype['end'] = item['end']
-		prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
-		prototype['vowel'] = item['fields']['phone']
-		prototype['nformants'] = 5
-		prototype['F1'] = item['fields']['F1']
-		prototype['F2'] = item['fields']['F2']
-		prototype['F3'] = item['fields']['F3']
-		prototype['B1'] = item['fields']['B1']
-		prototype['B2'] = item['fields']['B2']
-		prototype['B3'] = item['fields']['B3']
-		to_return.append(prototype)
+	if isinstance(prototype_data, list):
+		for item in prototype_data:
+			if isinstance(item, list) and item != []:
+					item = item[0]
+			else:
+				print("There was an error with this prototype generation instance.")
+				continue
+			prototype = {}
+			prototype['file_id'] = item['tags']['discourse']
+			prototype['start'] = item['begin']
+			prototype['end'] = item['end']
+			prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
+			prototype['vowel'] = item['fields']['phone']
+			prototype['nformants'] = 5
+			prototype['F1'] = item['fields']['F1']
+			prototype['F2'] = item['fields']['F2']
+			prototype['F3'] = item['fields']['F3']
+			prototype['B1'] = item['fields']['B1']
+			prototype['B2'] = item['fields']['B2']
+			prototype['B3'] = item['fields']['B3']
+			to_return.append(prototype)
+	elif isinstance(prototype_data, dict):
+		for key, value in prototype_data.items():
+			prototype = {}
+			file_id = key[0][0].split("/")[-2]
+			prototype['file_id'] = file_id #...
+			prototype['start'] = key[0][1]
+			prototype['end'] = key[0][2]
+			prototype['measurement_time'] = prototype['start']+((prototype['end']-prototype['start'])*0.33)
+			prototype['vowel'] = key[0][4]
+			prototype['nformants'] = 5
+			prototype['F1'] = value['F1']
+			prototype['F2'] = value['F2']
+			prototype['F3'] = value['F3']
+			prototype['B1'] = value['B1']
+			prototype['B2'] = value['B2']
+			prototype['B3'] = value['B3']
+			to_return.append(prototype)
+
 	return to_return
 
 def to_comparison_csv(pair_data):
@@ -191,10 +206,12 @@ def get_average_hand_checked(hand_checked_list):
 if __name__ == '__main__':
 	# Get algorithm data
 	corpus_name = 'VTRSubset'
+	nIterations = 3
+	remove_short = 0.05
 
 	beg = time.time()
 	with CorpusContext(corpus_name, **graph_db) as g:
-		prototype, metadata, data = extract_formants_full(g, VOWELS)
+		prototype, metadata, data = extract_formants_full(g, VOWELS, remove_short=remove_short, nIterations=nIterations)
 	end = time.time()
 	duration = end - beg
 	print("-------------")
@@ -210,7 +227,6 @@ if __name__ == '__main__':
 
 	# Load in hand-checked comparison data and clean it
 	clean_hand_checked = {}
-	#corpus_dir = '/Volumes/data/datasets/sct_benchmarks/' + corpus_name
 	corpus_dir = '/Users/mlml/Documents/transfer/' + corpus_name
 	hand_checked_list = []
 	for root, dirs, files in os.walk(corpus_dir):
@@ -319,7 +335,7 @@ if __name__ == '__main__':
 	cov_columns = ['vowel', 'F1mean', 'F2mean', 'F3mean', 'B1mean', 'B2mean', 'B3mean', 'F1F1cov', 'F1F2cov', 'F1F3cov', 'F1B1cov', 'F1B2cov', 'F1B3cov', 'F2F2cov', 'F2F3cov', 'F2B1cov', 'F2B2cov', 'F2B3cov', 'F3F3cov', 'F3B1cov', 'F3B2cov', 'F3B3cov', 'B1B1cov', 'B1B2cov', 'B1B3cov', 'B2B2cov', 'B2B3cov', 'B3B3cov']
 
 	prototype_csv = to_prototype_csv(prototype)
-	algorithm_csv = data_to_csv_dict(data)
+	#algorithm_csv = data_to_csv_dict(data)
 	hand_csv = data_to_csv_dict(clean_hand_checked)
 	delta_csv = data_to_csv_dict(vowel_differences)
 	comparison_csv = to_comparison_csv(pairs)

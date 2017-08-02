@@ -9,7 +9,7 @@ import sys
 #sys.path.insert(0,"/Users/acoles/Documents/PolyglotDB-master-3/polyglotdb/acoustics")
 sys.path.insert(0,"/Users/mlml/Documents/GitHub/PolyglotDB/polyglotdb/acoustics")
 #sys.path.insert(0, "/users/mlml/Documents/transfer/PolyglotDB-master-3/polyglotdb/acoustics")
-from formant import analyze_formants_vowel_segments_new, get_mean_SD, get_stdev, refine_formants, extract_formants_full
+from formant import analyze_formants_vowel_segments_new, get_mean_SD, refine_formants, extract_formants_full
 
 import polyglotdb.io as pgio
 
@@ -81,27 +81,46 @@ def to_cov_csv(metadata):
 
 def to_prototype_csv(prototype_data):
 	to_return = []
-	for item in prototype_data:
-		print(item)
-		if isinstance(item, list) and item != []:
-			item = item[0]
-		else:
-			print("There was an error with this prototype generation instance.")
-			continue
-		prototype = {}
-		prototype['file_id'] = item['tags']['discourse']
-		prototype['start'] = item['begin']
-		prototype['end'] = item['end']
-		prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
-		prototype['vowel'] = item['fields']['phone']
-		prototype['nformants'] = 5
-		prototype['F1'] = item['fields']['F1']
-		prototype['F2'] = item['fields']['F2']
-		prototype['F3'] = item['fields']['F3']
-		prototype['B1'] = item['fields']['B1']
-		prototype['B2'] = item['fields']['B2']
-		prototype['B3'] = item['fields']['B3']
-		to_return.append(prototype)
+	if isinstance(prototype_data, list):
+		for item in prototype_data:
+			#print(item)
+			if isinstance(item, list) and item != []:
+					item = item[0]
+			else:
+				print("There was an error with this prototype generation instance.")
+				continue
+			prototype = {}
+			prototype['file_id'] = item['tags']['discourse']
+			prototype['start'] = item['begin']
+			prototype['end'] = item['end']
+			prototype['measurement_time'] = item['begin']+((item['end']-item['begin'])*0.33)
+			prototype['vowel'] = item['fields']['phone']
+			prototype['nformants'] = 5
+			prototype['F1'] = item['fields']['F1']
+			prototype['F2'] = item['fields']['F2']
+			prototype['F3'] = item['fields']['F3']
+			prototype['B1'] = item['fields']['B1']
+			prototype['B2'] = item['fields']['B2']
+			prototype['B3'] = item['fields']['B3']
+			to_return.append(prototype)
+	elif isinstance(prototype_data, dict):
+		for key, value in prototype_data.items():
+			prototype = {}
+			file_id = key[0][0].split("/")[-2]
+			prototype['file_id'] = file_id #...
+			prototype['start'] = key[0][1]
+			prototype['end'] = key[0][2]
+			prototype['measurement_time'] = prototype['start']+((prototype['end']-prototype['start'])*0.33)
+			prototype['vowel'] = key[0][4]
+			prototype['nformants'] = 5
+			prototype['F1'] = value['F1']
+			prototype['F2'] = value['F2']
+			prototype['F3'] = value['F3']
+			prototype['B1'] = value['B1']
+			prototype['B2'] = value['B2']
+			prototype['B3'] = value['B3']
+			to_return.append(prototype)
+
 	return to_return
 
 def to_comparison_csv(pair_data):
@@ -190,6 +209,8 @@ def get_average_hand_checked(hand_checked_list):
 if __name__ == '__main__':
 	# Get algorithm data
 	corpus_name = 'VTRFormants'
+	nIterations = 3
+	remove_short = 0.05
 
 	beg = time.time()
 	with CorpusContext(corpus_name, **graph_db) as g:
@@ -205,7 +226,7 @@ if __name__ == '__main__':
 			g.bolt_port = 7687
 			g.config.praat_path = "/Applications/Praat.app/Contents/MacOS/Praat"
 
-		prototype, metadata, data = extract_formants_full(g, VOWELS)
+		prototype, metadata, data = extract_formants_full(g, VOWELS, remove_short=remove_short, nIterations=nIterations)
 	end = time.time()
 	duration = end - beg
 	print("-------------")
@@ -227,6 +248,8 @@ if __name__ == '__main__':
 	corpus_pair = [corpus_dir_1, corpus_dir_2]
 
 	hand_checked_list = []
+	counter = 0
+	counter2 = 0
 	for directory in corpus_pair:
 		for root, dirs, files in os.walk(directory):
 			#print(dirs)
@@ -238,32 +261,44 @@ if __name__ == '__main__':
 					formant_file = os.path.join(root, file)
 					#print(formant_file)
 					if "corrections" in formant_file:
+						#print("corrections:", formant_file)
 						continue
 					phone_file = root + "/" + file_id + ".phn"
 					#print(phone_file)
 					speaker = phone_file.split("/")[-2]
 					file_id = speaker + "_" + file_id
 					hand_checked = get_hand_formants(formant_file, phone_file)
+					counter = counter + 1
 					for item in hand_checked:
 						meta = (file_id, item[0], item[1], item[2])        # (file, start, end, vowel)
 						clean_hand_checked[meta] = item[3]
+				elif file.endswith(".WAV"):
+					counter2 = counter2 + 1
 
 	print()
+	print("counter:", counter)
+	print("counter2:", counter2)
 	print("Hand-checked data:")
-	print(clean_hand_checked)
+	#print(clean_hand_checked)
 
 
 	# Make correspondence between algorithm and hand-checked data (find matching pairs)
 	pairs = {}
 	vowel_differences = {}
+	#print("DATA LEN:", len(data))
+	print("CLEAN HAND CHECKED:", len(clean_hand_checked))
 	for alg_point, values in data.items():
 		#match_found = False
 		f1_delta, f2_delta, f3_delta, b1_delta, b2_delta, b3_delta = 0, 0, 0, 0, 0, 0
 		for hand_point, values2 in clean_hand_checked.items():
 			smallest_diff = float('inf')
+			#print(hand_point[0], alg_point[0][0], hand_point[3], alg_point[0][4])
 			if hand_point[0] in alg_point[0][0] and hand_point[3] in alg_point[0][4]:        # If file names and vowels match
+				print("file names and vowels match")
+				print(hand_point[0], alg_point[0][0], hand_point[3], alg_point[0][4])
 				beg_diff = abs(hand_point[1] - alg_point[0][1])
 				if beg_diff < smallest_diff:
+					print("updating diff")
 					smallest_diff = beg_diff
 					formants = values2
 					#match_found = True
@@ -284,16 +319,18 @@ if __name__ == '__main__':
 						b3_delta = "undef"
 					pair = [values, values2]
 		if [f1_delta, f2_delta, f3_delta, b1_delta, b2_delta, b3_delta] == [0, 0, 0, 0, 0, 0]:
+			print("bonjour")
 			continue
 		else:
 			pairs[alg_point] = pair
 			vowel_differences[alg_point] = [f1_delta, f2_delta, f3_delta, b1_delta, b2_delta, b3_delta]
 
 	print()
-	print("PAIRS:", pairs)
+	#print("PAIRS:", pairs)
+	print("PAIR LEN,", len(pairs))
 	print()
-	print("Deltas (absolute distance):")
-	print(vowel_differences)
+	#print("Deltas (absolute distance):")
+	#print(vowel_differences)
 
 
 	# Get averages of error for each vowel class, for each value
@@ -332,8 +369,8 @@ if __name__ == '__main__':
 
 
 	# Write to a file
-	csv_columns = ['Computer','Date','Corpus', 'Algorithm type', 'Total time']
-	dict_data = [{'Computer': platform.node(), 'Date': str(datetime.now()), 'Corpus': corpus_name, 'Algorithm type': '1st pass FAVE-like', 'Total time': duration}]
+	csv_columns = ['Computer','Date','Corpus', 'Algorithm type', "remove_short", "nIterations", 'Total time']
+	dict_data = [{'Computer': platform.node(), 'Date': str(datetime.now()), 'Corpus': corpus_name, 'Algorithm type': '1st pass FAVE-like', 'remove_short':remove_short, 'nIterations':nIterations, 'Total time': duration}]
 
 	prototype_columns = ['file_id', 'start', 'end', 'measurement_time', 'vowel', 'nformants', 'F1', 'F2', 'F3', 'B1', 'B2', 'B3']
 	algorithm_columns = ['Vowel instance', 'F1', 'F2', 'F3', 'B1', 'B2', 'B3']
@@ -381,7 +418,9 @@ if __name__ == '__main__':
 	with open('comp_benchmark'+date+'.csv', 'w+') as csv_file:
 		writer = csv.DictWriter(csv_file, fieldnames=comparison_columns)
 		writer.writeheader()
-		for row in comparison_csv:
+		print("COMPARISON CSV LEN", len(comparison_csv))
+		for i, row in enumerate(comparison_csv):
+			#print(i)
 			writer.writerow(row)
 
 	with open('vowelavg_benchmark'+date+'.csv', 'w+') as csv_file:
