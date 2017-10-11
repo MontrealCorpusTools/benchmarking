@@ -10,10 +10,6 @@ from polyglotdb import CorpusContext
 from polyglotdb.corpus import AudioContext
 from polyglotdb.config import CorpusConfig
 
-from polyglotdb.io import (inspect_buckeye, inspect_textgrid, inspect_timit,
-                        inspect_labbcat, inspect_mfa, inspect_fave,
-                        guess_textgrid_format)
-
 graph_db = {'graph_host':'localhost', 'graph_port': 7474,
             'user': 'neo4j', 'password': 'test'}
 
@@ -32,15 +28,12 @@ def call_back(*args):
         times.append(logtime)
         lasttime = time.time()
 
-if not os.path.exists('exportbenchmark.csv'):
-    open('exportbenchmark.csv', 'w')
-
 def analyze_cog(data, script_path, phone_class, praat_path):
     beg = time.time()
 
     with CorpusContext(data, **graph_db) as c:
         c.config.praat_path = praat_path
-        c.analyze_script(phone_class, script_path, 'COG', stop_check=None, call_back=None)
+        c.analyze_script(phone_class, script_path, 'COG', stop_check=None, call_back=call_back)
     end = time.time()
     return [(end-beg)]
 
