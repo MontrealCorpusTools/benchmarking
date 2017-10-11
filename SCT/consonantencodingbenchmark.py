@@ -45,7 +45,7 @@ def call_back(*args):
     global lasttime
     print(*args)
     if len(args) > 1:
-    	return
+        return
     if isinstance(args[0], int):
         logtime = time.time() - lasttime
         print(logtime)
@@ -96,9 +96,9 @@ if not os.path.exists('benchmark'+date+'.csv'):
 csv_file = 'benchmark'+date+'.csv'
 
 with open('benchmark'+date+'.csv', 'a') as csv_file:
-	writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-	writer.writerow(dict_data[0])
-	#writer.writerow(dict_data[1])
+    writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+    writer.writerow(dict_data[0])
+    #writer.writerow(dict_data[1])
 	#writer.writerow(dict_data[2])
 	#writer.writerow(dict_data[3])
 
