@@ -1,0 +1,52 @@
+mport os
+import time
+import logging
+import platform
+import csv
+from datetime import datetime
+import statistics
+import sys
+sys.path.insert(0,"/Users/mlml/Documents/GitHub/PolyglotDB/polyglotdb/acoustics")
+from formant import analyze_formants_vowel_segments_new, get_mean_SD, get_stdev, refine_formants, extract_formants_full
+
+import polyglotdb.io as pgio
+
+from polyglotdb import CorpusContext
+from polyglotdb.config import CorpusConfig
+from polyglotdb.acoustics.analysis import generate_phone_segments_by_speaker
+
+from acousticsim.analysis.praat import run_script
+
+sys.path.insert(0,"/Users/mlml/Documents/transfer/Formants/")
+from hand_formants import get_hand_formants, get_mean
+
+graph_db = ({'graph_host':'localhost', 'graph_port': 7474,
+	'graph_user': 'neo4j', 'graph_password': 'test'})
+
+#VOWELS = ['iy', 'ih', 'eh', 'ey', 'ae', 'aa', 'aw', 'ay', 'ah', 'ao', 'oy', 'ow', 'uh', 'uw', 'ux', 'er', 'ax', 'ix', 'axr', 'ax-h']
+#VOWELS = ['ih','iy','ah','uw','er','ay','aa','ae','eh','ow']
+#VOWELS = ['ae', 'ah', 'aw', 'eh', 'er', 'ey', 'ih', 'iy', 'oa', 'oo', 'uw']	# NOT TIMIT although looks similar!
+
+# Special cases: 'uw'
+MONOPHTHONGS = ['I', 'E', 'ae', 'aeE', 'aeN', 'a', 'open o', 'wedge', 'ow', 'U', 'uw', 'owr', 'uwr', 'r']
+DIPHTHONGS = ['ij', 'ej', 'uw', 'aiv', 'aio', 'au', 'oi', 'ir', 'er', 'ar', 'open o-r', ]
+
+def get_algorithm_data(corpus_name):
+	beg = time.time()
+	with CorpusContext(corpus_name, **graph_db) as g:
+
+		# THIS IS HACKY, fix later! Find out why these aren't getting encoded on Chevre
+		try:
+			print(g.graph_host)
+		except:
+			g.acoustic_host = 'localhost'
+			g.acoustic_port = 8086
+			g.graph_host = 'localhost'
+			g.graph_port = 7474
+			g.bolt_port = 7687
+			g.config.praat_path = "/Applications/Praat.app/Contents/MacOS/Praat"
+
+		prototype, data = extract_formants_full(g, VOWELS)
+	end = time.time()
+	duration = end - beg
+	return prototype, data, duration
